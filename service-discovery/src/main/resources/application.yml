@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: service-discovery
+  profiles:
+    active: ${APP_PROFILE:local}
+
+server:
+  port: 8761
+  servlet:
+    context-path: /
+
+eureka:
+  server:
+    enable-self-preservation: false
+    eviction-interval-timer-in-ms: 10000
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
+
+logging:
+  level:
+    root: ${LOGGING_LEVEL_ROOT:INFO}
+    org.springframework.cloud: DEBUG
+  pattern:
+    console: "[%d{yyyy-MM-dd HH:mm:ss}] [%thread] %-5level %logger{36} - %msg%n"
