@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+    <changeSet id="001-create-orders" author="platform">
+        <createTable tableName="orders">
+            <column name="id" type="VARCHAR(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_number" type="VARCHAR(40)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_orders_number"/>
+            </column>
+            <column name="customer_id" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_amount" type="DECIMAL(14,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="payment_id" type="VARCHAR(36)"/>
+            <column name="failure_reason" type="VARCHAR(500)"/>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addCheckConstraint tableName="orders" constraintName="ck_orders_total_non_negative"
+                            checkCondition="total_amount &gt;= 0"/>
+
+        <createIndex tableName="orders" indexName="idx_orders_customer">
+            <column name="customer_id"/>
+        </createIndex>
+        <createIndex tableName="orders" indexName="idx_orders_status">
+            <column name="status"/>
+        </createIndex>
+        <!-- Supports the default "my recent orders" listing, which sorts by created_at desc. -->
+        <createIndex tableName="orders" indexName="idx_orders_created">
+            <column name="created_at"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="orders"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="001-create-order-items" author="platform">
+        <createTable tableName="order_items">
+            <column name="id" type="VARCHAR(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_id" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_id" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_name" type="VARCHAR(200)"/>
+            <column name="quantity" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="unit_price" type="DECIMAL(12,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="line_total" type="DECIMAL(14,2)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="order_items" baseColumnNames="order_id"
+                referencedTableName="orders" referencedColumnNames="id"
+                constraintName="fk_order_items_order" onDelete="CASCADE"/>
+
+        <addCheckConstraint tableName="order_items" constraintName="ck_order_items_quantity_positive"
+                            checkCondition="quantity &gt; 0"/>
+
+        <createIndex tableName="order_items" indexName="idx_order_items_order">
+            <column name="order_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="order_items"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="001-create-order-status-history" author="platform">
+        <createTable tableName="order_status_history">
+            <column name="id" type="VARCHAR(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_id" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="from_status" type="VARCHAR(30)"/>
+            <column name="to_status" type="VARCHAR(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="note" type="VARCHAR(500)"/>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="order_status_history" indexName="idx_osh_order">
+            <column name="order_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="order_status_history"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="001-create-processed-events" author="platform">
+        <comment>Idempotency ledger: primary key on event_id makes a redelivery a no-op.</comment>
+        <createTable tableName="processed_events">
+            <column name="event_id" type="VARCHAR(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="event_type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="processed_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <rollback>
+            <dropTable tableName="processed_events"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

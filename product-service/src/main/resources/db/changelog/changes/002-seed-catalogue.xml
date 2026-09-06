@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+    <!-- Demo catalogue so the platform is usable the moment it starts. -->
+    <changeSet id="002-seed-categories" author="platform" context="local,docker">
+        <insert tableName="categories">
+            <column name="id" value="c0000000-0000-0000-0000-000000000001"/>
+            <column name="name" value="Electronics"/>
+            <column name="description" value="Phones, laptops and accessories"/>
+        </insert>
+        <insert tableName="categories">
+            <column name="id" value="c0000000-0000-0000-0000-000000000002"/>
+            <column name="name" value="Home &amp; Kitchen"/>
+            <column name="description" value="Appliances and cookware"/>
+        </insert>
+        <insert tableName="categories">
+            <column name="id" value="c0000000-0000-0000-0000-000000000003"/>
+            <column name="name" value="Books"/>
+            <column name="description" value="Print and reference titles"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="002-seed-products" author="platform" context="local,docker">
+        <insert tableName="products">
+            <column name="id" value="p0000000-0000-0000-0000-000000000001"/>
+            <column name="sku" value="SKU-LAPTOP-001"/>
+            <column name="name" value="ProBook 14 Laptop"/>
+            <column name="description" value="14-inch, 16GB RAM, 512GB SSD"/>
+            <column name="price" valueNumeric="74999.00"/>
+            <column name="category_id" value="c0000000-0000-0000-0000-000000000001"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueDate="2026-01-01T00:00:00"/>
+            <column name="updated_at" valueDate="2026-01-01T00:00:00"/>
+            <column name="version" valueNumeric="0"/>
+        </insert>
+        <insert tableName="products">
+            <column name="id" value="p0000000-0000-0000-0000-000000000002"/>
+            <column name="sku" value="SKU-PHONE-001"/>
+            <column name="name" value="Nova 5G Smartphone"/>
+            <column name="description" value="6.5-inch AMOLED, 128GB"/>
+            <column name="price" valueNumeric="28999.00"/>
+            <column name="category_id" value="c0000000-0000-0000-0000-000000000001"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueDate="2026-01-01T00:00:00"/>
+            <column name="updated_at" valueDate="2026-01-01T00:00:00"/>
+            <column name="version" valueNumeric="0"/>
+        </insert>
+        <insert tableName="products">
+            <column name="id" value="p0000000-0000-0000-0000-000000000003"/>
+            <column name="sku" value="SKU-HDPH-001"/>
+            <column name="name" value="Studio Wireless Headphones"/>
+            <column name="description" value="Active noise cancelling, 30h battery"/>
+            <column name="price" valueNumeric="8999.00"/>
+            <column name="category_id" value="c0000000-0000-0000-0000-000000000001"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueDate="2026-01-01T00:00:00"/>
+            <column name="updated_at" valueDate="2026-01-01T00:00:00"/>
+            <column name="version" valueNumeric="0"/>
+        </insert>
+        <insert tableName="products">
+            <column name="id" value="p0000000-0000-0000-0000-000000000004"/>
+            <column name="sku" value="SKU-MIXER-001"/>
+            <column name="name" value="Chef Stand Mixer"/>
+            <column name="description" value="5L stainless steel bowl, 8 speeds"/>
+            <column name="price" valueNumeric="15499.00"/>
+            <column name="category_id" value="c0000000-0000-0000-0000-000000000002"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueDate="2026-01-01T00:00:00"/>
+            <column name="updated_at" valueDate="2026-01-01T00:00:00"/>
+            <column name="version" valueNumeric="0"/>
+        </insert>
+        <insert tableName="products">
+            <column name="id" value="p0000000-0000-0000-0000-000000000005"/>
+            <column name="sku" value="SKU-KETTLE-001"/>
+            <column name="name" value="Electric Kettle 1.7L"/>
+            <column name="description" value="Auto shut-off, boil-dry protection"/>
+            <column name="price" valueNumeric="1899.00"/>
+            <column name="category_id" value="c0000000-0000-0000-0000-000000000002"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueDate="2026-01-01T00:00:00"/>
+            <column name="updated_at" valueDate="2026-01-01T00:00:00"/>
+            <column name="version" valueNumeric="0"/>
+        </insert>
+        <insert tableName="products">
+            <column name="id" value="p0000000-0000-0000-0000-000000000006"/>
+            <column name="sku" value="SKU-BOOK-001"/>
+            <column name="name" value="Designing Data-Intensive Applications"/>
+            <column name="description" value="Reference title on distributed systems"/>
+            <column name="price" valueNumeric="3200.00"/>
+            <column name="category_id" value="c0000000-0000-0000-0000-000000000003"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueDate="2026-01-01T00:00:00"/>
+            <column name="updated_at" valueDate="2026-01-01T00:00:00"/>
+            <column name="version" valueNumeric="0"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

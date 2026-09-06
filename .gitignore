@@ -1,4 +1,38 @@
-#!/bin/bash
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+release.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
 
-git config --global user.email "dev@enterprise.com"
-git config --global user.name "Enterprise Developer"
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.project
+.classpath
+nbproject/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Secrets - never commit real credentials
+.env
+*.pem
+*.key
+application-local-secrets.yml
+
+# Build output
+*.jar
+*.war
+!.mvn/wrapper/maven-wrapper.jar

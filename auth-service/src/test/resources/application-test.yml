@@ -1,0 +1,30 @@
+# Test profile: no Eureka, no Config Server, no Kafka. Just the service and the
+# PostgreSQL container that Testcontainers starts.
+spring:
+  config:
+    import: ""
+  cloud:
+    config:
+      enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  liquibase:
+    change-log: classpath:db/changelog/changelog-master.xml
+    enabled: true
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+jwt:
+  secret: test-only-secret-that-is-definitely-long-enough-for-hs256-0123456789
+  expiration: 3600000
+  refresh-expiration: 86400000
+
+logging:
+  level:
+    root: WARN
+    com.enterprise: INFO

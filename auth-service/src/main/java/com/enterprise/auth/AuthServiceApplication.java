@@ -4,7 +4,11 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
-@SpringBootApplication
+/**
+ * Scans the whole com.enterprise base package so the shared components in the
+ * common module (exception handler, correlation filter, JWT security) are registered.
+ */
+@SpringBootApplication(scanBasePackages = "com.enterprise")
 @EnableDiscoveryClient
 public class AuthServiceApplication {
 

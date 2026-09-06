@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: config-server
+  profiles:
+    # 'native' serves configuration from the classpath instead of a remote git repo,
+    # so cloning this project is enough to run it. Point spring.cloud.config.server.git
+    # at a repository to switch to the git backend.
+    active: native
+  cloud:
+    config:
+      server:
+        native:
+          search-locations: classpath:/config
+
+server:
+  port: 8888
+
+eureka:
+  client:
+    enabled: ${EUREKA_CLIENT_ENABLED:true}
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka}
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+logging:
+  level:
+    root: ${LOGGING_LEVEL_ROOT:INFO}

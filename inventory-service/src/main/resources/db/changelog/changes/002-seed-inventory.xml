@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+    <!-- Product ids match the seed data in product-service. SKU-BOOK-001 is
+         deliberately stocked at 3 so the out-of-stock path is easy to demonstrate. -->
+    <changeSet id="002-seed-inventory" author="platform" context="local,docker">
+        <insert tableName="inventory">
+            <column name="id" value="i0000000-0000-0000-0000-000000000001"/>
+            <column name="product_id" value="p0000000-0000-0000-0000-000000000001"/>
+            <column name="sku" value="SKU-LAPTOP-001"/>
+            <column name="quantity_available" valueNumeric="25"/>
+            <column name="quantity_reserved" valueNumeric="0"/>
+            <column name="reorder_level" valueNumeric="10"/>
+            <column name="created_at" valueDate="2026-01-01T00:00:00"/>
+            <column name="updated_at" valueDate="2026-01-01T00:00:00"/>
+            <column name="version" valueNumeric="0"/>
+        </insert>
+        <insert tableName="inventory">
+            <column name="id" value="i0000000-0000-0000-0000-000000000002"/>
+            <column name="product_id" value="p0000000-0000-0000-0000-000000000002"/>
+            <column name="sku" value="SKU-PHONE-001"/>
+            <column name="quantity_available" valueNumeric="100"/>
+            <column name="quantity_reserved" valueNumeric="0"/>
+            <column name="reorder_level" valueNumeric="10"/>
+            <column name="created_at" valueDate="2026-01-01T00:00:00"/>
+            <column name="updated_at" valueDate="2026-01-01T00:00:00"/>
+            <column name="version" valueNumeric="0"/>
+        </insert>
+        <insert tableName="inventory">
+            <column name="id" value="i0000000-0000-0000-0000-000000000003"/>
+            <column name="product_id" value="p0000000-0000-0000-0000-000000000003"/>
+            <column name="sku" value="SKU-HDPH-001"/>
+            <column name="quantity_available" valueNumeric="250"/>
+            <column name="quantity_reserved" valueNumeric="0"/>
+            <column name="reorder_level" valueNumeric="10"/>
+            <column name="created_at" valueDate="2026-01-01T00:00:00"/>
+            <column name="updated_at" valueDate="2026-01-01T00:00:00"/>
+            <column name="version" valueNumeric="0"/>
+        </insert>
+        <insert tableName="inventory">
+            <column name="id" value="i0000000-0000-0000-0000-000000000004"/>
+            <column name="product_id" value="p0000000-0000-0000-0000-000000000004"/>
+            <column name="sku" value="SKU-MIXER-001"/>
+            <column name="quantity_available" valueNumeric="40"/>
+            <column name="quantity_reserved" valueNumeric="0"/>
+            <column name="reorder_level" valueNumeric="10"/>
+            <column name="created_at" valueDate="2026-01-01T00:00:00"/>
+            <column name="updated_at" valueDate="2026-01-01T00:00:00"/>
+            <column name="version" valueNumeric="0"/>
+        </insert>
+        <insert tableName="inventory">
+            <column name="id" value="i0000000-0000-0000-0000-000000000005"/>
+            <column name="product_id" value="p0000000-0000-0000-0000-000000000005"/>
+            <column name="sku" value="SKU-KETTLE-001"/>
+            <column name="quantity_available" valueNumeric="300"/>
+            <column name="quantity_reserved" valueNumeric="0"/>
+            <column name="reorder_level" valueNumeric="10"/>
+            <column name="created_at" valueDate="2026-01-01T00:00:00"/>
+            <column name="updated_at" valueDate="2026-01-01T00:00:00"/>
+            <column name="version" valueNumeric="0"/>
+        </insert>
+        <insert tableName="inventory">
+            <column name="id" value="i0000000-0000-0000-0000-000000000006"/>
+            <column name="product_id" value="p0000000-0000-0000-0000-000000000006"/>
+            <column name="sku" value="SKU-BOOK-001"/>
+            <column name="quantity_available" valueNumeric="3"/>
+            <column name="quantity_reserved" valueNumeric="0"/>
+            <column name="reorder_level" valueNumeric="10"/>
+            <column name="created_at" valueDate="2026-01-01T00:00:00"/>
+            <column name="updated_at" valueDate="2026-01-01T00:00:00"/>
+            <column name="version" valueNumeric="0"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

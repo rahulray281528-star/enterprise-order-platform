@@ -1,0 +1,13 @@
+# Configuration served to every service that imports the Config Server.
+# Values here are overridden by each service's own application.yml and by environment
+# variables, so this file holds only genuinely cross-cutting defaults.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+platform:
+  currency: INR
+  order:
+    cancellable-statuses: CREATED,INVENTORY_RESERVED,PAYMENT_PENDING

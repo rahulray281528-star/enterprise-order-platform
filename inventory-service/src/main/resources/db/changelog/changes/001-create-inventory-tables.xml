@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+    <changeSet id="001-create-inventory" author="platform">
+        <createTable tableName="inventory">
+            <column name="id" type="VARCHAR(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="product_id" type="VARCHAR(36)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_inventory_product"/>
+            </column>
+            <column name="sku" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quantity_available" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quantity_reserved" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reorder_level" type="INTEGER" defaultValueNumeric="10">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Stock can never go negative, whatever the application does. -->
+        <addCheckConstraint tableName="inventory" constraintName="ck_inventory_available_non_negative"
+                            checkCondition="quantity_available &gt;= 0"/>
+        <addCheckConstraint tableName="inventory" constraintName="ck_inventory_reserved_non_negative"
+                            checkCondition="quantity_reserved &gt;= 0"/>
+
+        <createIndex tableName="inventory" indexName="idx_inventory_product">
+            <column name="product_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="inventory"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="001-create-inventory-transactions" author="platform">
+        <createTable tableName="inventory_transactions">
+            <column name="id" type="VARCHAR(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="product_id" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="order_id" type="VARCHAR(36)"/>
+            <column name="transaction_type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quantity" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="inventory_transactions" indexName="idx_inv_tx_order">
+            <column name="order_id"/>
+        </createIndex>
+        <createIndex tableName="inventory_transactions" indexName="idx_inv_tx_product">
+            <column name="product_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="inventory_transactions"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

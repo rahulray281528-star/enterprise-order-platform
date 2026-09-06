@@ -6,10 +6,10 @@ import com.enterprise.auth.dto.TokenResponse;
 import com.enterprise.auth.dto.UserResponse;
 import com.enterprise.auth.entity.User;
 import com.enterprise.auth.repository.UserRepository;
-import com.enterprise.auth.security.JwtTokenProvider;
 import com.enterprise.common.exception.BusinessException;
 import com.enterprise.common.exception.ResourceNotFoundException;
 import com.enterprise.common.exception.UnauthorizedException;
+import com.enterprise.common.security.JwtService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -22,12 +22,12 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final JwtService jwtService;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.jwtTokenProvider = jwtTokenProvider;
+        this.jwtService = jwtService;
     }
 
     public UserResponse register(RegisterRequest request) {
@@ -36,12 +36,12 @@ public class AuthService {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new BusinessException("Username already exists", "USERNAME_EXISTS", 409);
         }
-
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new BusinessException("Email already exists", "EMAIL_EXISTS", 409);
         }
 
-        User.UserRole role = User.UserRole.valueOf(request.getRole().toUpperCase());
+        User.UserRole role = User.UserRole.valueOf(
+                request.getRole() == null ? "CUSTOMER" : request.getRole().toUpperCase());
 
         User user = User.builder()
                 .username(request.getUsername())
@@ -50,51 +50,48 @@ public class AuthService {
                 .role(role)
                 .build();
 
-        User savedUser = userRepository.save(user);
-        log.info("User registered successfully: {}", savedUser.getId());
-
-        return mapToUserResponse(savedUser);
+        User saved = userRepository.save(user);
+        log.info("User registered successfully: {}", saved.getId());
+        return mapToUserResponse(saved);
     }
 
+    @Transactional(readOnly = true)
     public TokenResponse login(LoginRequest request) {
         log.info("Login attempt for user: {}", request.getUsername());
 
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new UnauthorizedException("Invalid username or password"));
 
-        if (!user.getIsActive()) {
+        if (Boolean.FALSE.equals(user.getIsActive())) {
             throw new UnauthorizedException("User account is inactive");
         }
-
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            // Same message as an unknown username, so the endpoint cannot be used to enumerate accounts.
             throw new UnauthorizedException("Invalid username or password");
         }
 
-        String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getUsername(), user.getRole().name());
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), user.getUsername());
+        String accessToken = jwtService.generateAccessToken(user.getId(), user.getUsername(), user.getRole().name());
+        String refreshToken = jwtService.generateRefreshToken(user.getId(), user.getUsername());
 
         log.info("User logged in successfully: {}", user.getId());
-
         return TokenResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
-                .expiresIn(3600)
+                .expiresIn(jwtService.getExpirationSeconds())
                 .tokenType("Bearer")
                 .build();
     }
 
+    @Transactional(readOnly = true)
     public UserResponse getUserById(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
         return mapToUserResponse(user);
     }
 
+    @Transactional(readOnly = true)
     public boolean validateToken(String token) {
-        return jwtTokenProvider.validateToken(token);
-    }
-
-    public String getUserIdFromToken(String token) {
-        return jwtTokenProvider.getUserIdFromToken(token);
+        return jwtService.isValid(token);
     }
 
     private UserResponse mapToUserResponse(User user) {

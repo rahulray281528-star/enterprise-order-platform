@@ -1,0 +1,253 @@
+# Enterprise Order Management & E-Commerce Microservices Platform
+#
+#   docker compose up --build
+#
+# Brings up PostgreSQL, Redis, Kafka (KRaft - no ZooKeeper) and all nine services.
+# Nothing here needs an AWS account, a paid service, or any credential of your own.
+name: enterprise-order-platform
+
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  networks: [platform]
+  environment: &common-env
+    SPRING_PROFILES_ACTIVE: docker
+    EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka
+    CONFIG_SERVER_URL: http://config-server:8888
+    SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    SPRING_DATA_REDIS_HOST: redis
+    SPRING_DATA_REDIS_PORT: 6379
+    SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+    SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    JWT_SECRET: ${JWT_SECRET:-local-development-only-secret-change-me-in-production-0123456789}
+    LOGGING_LEVEL_ROOT: ${LOGGING_LEVEL_ROOT:-INFO}
+
+services:
+
+  # ------------------------------------------------------------------ infra
+  postgres:
+    image: postgres:16-alpine
+    container_name: eop-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: postgres
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [platform]
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: eop-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [platform]
+    restart: unless-stopped
+
+  kafka:
+    # KRaft mode: Kafka manages its own metadata quorum, so there is no ZooKeeper.
+    image: bitnami/kafka:3.7
+    container_name: eop-kafka
+    environment:
+      KAFKA_CFG_NODE_ID: "1"
+      KAFKA_CFG_PROCESS_ROLES: "broker,controller"
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      KAFKA_CFG_LISTENERS: "PLAINTEXT://:29092,CONTROLLER://:9093,EXTERNAL://:9092"
+      KAFKA_CFG_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:29092,EXTERNAL://localhost:9092"
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    ports:
+      - "${KAFKA_PORT:-9092}:9092"
+    volumes:
+      - kafka-data:/bitnami/kafka
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:29092 --list || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 15
+      start_period: 40s
+    networks: [platform]
+    restart: unless-stopped
+
+  # ------------------------------------------------------- platform services
+  service-discovery:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: service-discovery/Dockerfile
+    container_name: eop-service-discovery
+    ports:
+      - "8761:8761"
+    environment:
+      <<: *common-env
+      EUREKA_CLIENT_REGISTER_WITH_EUREKA: "false"
+      EUREKA_CLIENT_FETCH_REGISTRY: "false"
+
+  config-server:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: config-server/Dockerfile
+    container_name: eop-config-server
+    ports:
+      - "8888:8888"
+    depends_on:
+      service-discovery:
+        condition: service_healthy
+
+  api-gateway:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    container_name: eop-api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      service-discovery:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  auth-service:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: auth-service/Dockerfile
+    container_name: eop-auth-service
+    ports:
+      - "8081:8081"
+    environment:
+      <<: *common-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/auth_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+
+  product-service:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: product-service/Dockerfile
+    container_name: eop-product-service
+    ports:
+      - "8082:8082"
+    environment:
+      <<: *common-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/product_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+
+  inventory-service:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: inventory-service/Dockerfile
+    container_name: eop-inventory-service
+    ports:
+      - "8083:8083"
+    environment:
+      <<: *common-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/inventory_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+
+  order-service:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: order-service/Dockerfile
+    container_name: eop-order-service
+    ports:
+      - "8084:8084"
+    environment:
+      <<: *common-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/order_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+
+  payment-service:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: payment-service/Dockerfile
+    container_name: eop-payment-service
+    ports:
+      - "8085:8085"
+    environment:
+      <<: *common-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/payment_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+
+  notification-service:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: notification-service/Dockerfile
+    container_name: eop-notification-service
+    ports:
+      - "8086:8086"
+    environment:
+      <<: *common-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/notification_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+
+networks:
+  platform:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:
+  kafka-data:
